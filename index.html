@@ -5,9 +5,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Rua de Pixel</title>
     <style>
-      body { margin: 0; background: #0f1020; color: #fff; font-family: monospace; }
-      #app { display: grid; place-items: center; min-height: 100vh; }
-      canvas { image-rendering: pixelated; border: 2px solid #272a4f; }
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: radial-gradient(circle at top, #1a1e3d 0%, #0d1020 52%, #090b16 100%);
+        color: #fff;
+        font-family: monospace;
+      }
+
+      #app {
+        display: grid;
+        place-items: center;
+        min-height: 100svh;
+        padding: clamp(8px, 2vw, 16px);
+      }
+
+      canvas {
+        image-rendering: pixelated;
+        border: 2px solid #272a4f;
+        width: min(100%, 960px);
+        height: auto;
+        max-height: calc(100svh - 24px);
+        aspect-ratio: 16 / 9;
+      }
     </style>
   </head>
   <body>
