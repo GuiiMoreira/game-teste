@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { StateMachine } from '../systems/StateMachine';
 
-export type EnemyState = 'idle' | 'chase' | 'attack' | 'hurt' | 'down' | 'dead';
+export type EnemyState = 'idle' | 'walk' | 'chase' | 'attack' | 'hurt' | 'down' | 'dead';
 
 export class Enemy extends Phaser.Physics.Arcade.Sprite {
   readonly id: string;
@@ -19,6 +19,12 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     scene.physics.add.existing(this);
     this.setCollideWorldBounds(true);
     this.setDepth(y);
+    this.playAnimationForState('idle');
+  }
+
+  setCombatState(state: 'idle' | 'walk' | 'attack'): void {
+    this.state.setState(state);
+    this.playAnimationForState(state);
   }
 
   takeDamage(amount: number, knockbackX: number, knockbackY: number): boolean {
@@ -26,6 +32,8 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
 
     this.hp -= amount;
     this.state.setState('hurt');
+    this.playAnimationForState('hurt');
+    this.scene.sound.play('sfx-hit', { volume: 0.3 });
     this.setTintFill(0xff7777);
     this.setVelocity(knockbackX, knockbackY);
 
@@ -34,6 +42,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     if (this.hp <= 0) {
       this.hp = 0;
       this.state.setState('dead');
+      this.playAnimationForState('dead');
       this.setTint(0x333333);
       this.setVelocity(0, 0);
       this.disableBody(false, false);
@@ -43,10 +52,17 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
 
     this.scene.time.delayedCall(220, () => {
       if (this.active && !this.state.is('dead')) {
-        this.state.setState('idle');
+        this.setCombatState('idle');
       }
     });
 
     return false;
+  }
+
+  protected playAnimationForState(state: 'idle' | 'walk' | 'attack' | 'hurt' | 'dead'): void {
+    const key = `${this.texture.key}-${state}`;
+    if (this.scene.anims.exists(key) && this.anims.currentAnim?.key !== key) {
+      this.anims.play(key, true);
+    }
   }
 }

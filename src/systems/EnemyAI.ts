@@ -12,7 +12,7 @@ export class EnemyAI {
     const dist = Math.hypot(dx, dy);
 
     if (dist > 52) {
-      enemy.state.setState('chase');
+      enemy.setCombatState('walk');
       const speed = enemy.moveSpeed;
       enemy.setVelocity((dx / dist) * speed, (dy / dist) * speed);
       enemy.setFlipX(dx < 0);
@@ -20,7 +20,7 @@ export class EnemyAI {
     }
 
     enemy.setVelocity(0, 0);
-    enemy.state.setState('attack');
+    enemy.setCombatState('attack');
 
     if (now >= enemy.attackCooldownUntil) {
       enemy.attackCooldownUntil = now + 850;

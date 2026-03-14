@@ -33,6 +33,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     scene.add.existing(this);
     scene.physics.add.existing(this);
     this.setCollideWorldBounds(true);
+    this.playAnimationForState('idle');
   }
 
   getFacing(): number {
@@ -47,11 +48,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.setDepth(this.y + this.airHeight);
 
     if (this.state.is('hurt') || this.state.is('knockedDown') || this.state.is('getUp')) {
+      this.syncAnimation();
       return null;
     }
 
     if (now < this.attackLockedUntil) {
       this.updateJumpPhysics();
+      this.syncAnimation();
       return null;
     }
 
@@ -62,6 +65,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     this.updateMovement(input);
     this.updateJumpPhysics();
+    this.syncAnimation();
 
     return null;
   }
@@ -73,19 +77,25 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     this.hp = Math.max(0, this.hp - amount);
     this.state.setState('hurt');
+    this.playAnimationForState('hurt');
+    this.scene.sound.play('sfx-hit', { volume: 0.35 });
     this.setTintFill(0xff6666);
     this.setVelocityX(knockbackX);
     this.invulnerableUntil = now + 260;
 
     if (this.hp === 0) {
       this.state.setState('knockedDown');
+      this.playAnimationForState('dead');
       this.setVelocity(0, 0);
       return;
     }
 
     this.scene.time.delayedCall(160, () => {
       this.clearTint();
-      if (this.active) this.state.setState('idle');
+      if (this.active) {
+        this.state.setState('idle');
+        this.playAnimationForState('idle');
+      }
     });
   }
 
@@ -106,12 +116,17 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
   private startAttack(attack: AttackData, now: number): AttackData {
     this.state.setState('attack');
+    this.playAnimationForState('attack');
+    this.scene.sound.play('sfx-attack', { volume: 0.4 });
     this.setVelocity(0, 0);
     this.attackLockedUntil = now + attack.startupMs + attack.activeMs + attack.recoveryMs;
     this.setTint(0xf5d742);
     this.scene.time.delayedCall(attack.startupMs + attack.activeMs, () => this.clearTint());
     this.scene.time.delayedCall(attack.startupMs + attack.activeMs + attack.recoveryMs, () => {
-      if (this.active && this.state.is('attack')) this.state.setState('idle');
+      if (this.active && this.state.is('attack')) {
+        this.state.setState('idle');
+        this.playAnimationForState('idle');
+      }
     });
     return attack;
   }
@@ -166,4 +181,26 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     this.setScale(1, 1 - Math.min(0.35, this.airHeight / 500));
   }
+
+
+  private syncAnimation(): void {
+    if (this.state.is('attack') || this.state.is('hurt') || this.state.is('knockedDown')) {
+      return;
+    }
+
+    if (this.state.is('walk') || this.state.is('run')) {
+      this.playAnimationForState('walk');
+      return;
+    }
+
+    this.playAnimationForState('idle');
+  }
+
+  private playAnimationForState(state: 'idle' | 'walk' | 'attack' | 'hurt' | 'dead'): void {
+    const key = `player-${state}`;
+    if (this.anims.currentAnim?.key !== key) {
+      this.anims.play(key, true);
+    }
+  }
+
 }
