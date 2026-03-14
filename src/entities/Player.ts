@@ -23,6 +23,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private comboStep = 0;
   private comboUntil = 0;
   private attackLockedUntil = 0;
+  private invulnerableUntil = 0;
   private isAirborne = false;
   private verticalVelocity = 0;
   private airHeight = 0;
@@ -66,12 +67,15 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   takeDamage(amount: number, knockbackX: number): void {
+    const now = this.scene.time.now;
+    if (now < this.invulnerableUntil) return;
     if (this.state.is('knockedDown') || this.state.is('getUp')) return;
 
     this.hp = Math.max(0, this.hp - amount);
     this.state.setState('hurt');
     this.setTintFill(0xff6666);
     this.setVelocityX(knockbackX);
+    this.invulnerableUntil = now + 260;
 
     if (this.hp === 0) {
       this.state.setState('knockedDown');

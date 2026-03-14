@@ -2,6 +2,11 @@ import Phaser from 'phaser';
 import type { AttackData } from './AttackData';
 import type { Player } from '../entities/Player';
 import type { Enemy } from '../entities/Enemy';
+import { drawDebugRect } from '../utils/DebugDraw';
+
+const DEBUG_HIT_RECTS = false;
+const HITSTOP_MS = 45;
+const IMPACT_FLASH_MS = 80;
 
 export class CombatSystem {
   private readonly recentHitByAttack = new Set<string>();
@@ -16,6 +21,10 @@ export class CombatSystem {
       const y = player.y - player.getCurrentAirHeight() - attack.height / 2;
       const hitRect = new Phaser.Geom.Rectangle(x, y, attack.range, attack.height);
 
+      if (DEBUG_HIT_RECTS) {
+        drawDebugRect(scene, hitRect.x, hitRect.y, hitRect.width, hitRect.height, 0xff00ff);
+      }
+
       enemies.getChildren().forEach((obj) => {
         const enemy = obj as Enemy;
         if (!enemy.active) return;
@@ -26,8 +35,26 @@ export class CombatSystem {
           this.recentHitByAttack.add(tag);
           const direction = player.getFacing();
           enemy.takeDamage(attack.damage, attack.knockbackX * direction, attack.knockbackY);
+          this.applyHitstop(scene, HITSTOP_MS);
+          this.flashImpact(enemy, IMPACT_FLASH_MS);
         }
       });
+    });
+  }
+
+
+  private applyHitstop(scene: Phaser.Scene, durationMs: number): void {
+    scene.physics.world.pause();
+    scene.time.delayedCall(durationMs, () => {
+      if (!scene.sys.isActive()) return;
+      scene.physics.world.resume();
+    });
+  }
+
+  private flashImpact(target: Enemy, durationMs: number): void {
+    target.setTintFill(0xffffff);
+    target.scene.time.delayedCall(durationMs, () => {
+      if (target.active) target.clearTint();
     });
   }
 
