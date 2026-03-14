@@ -10,6 +10,12 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
   parent: 'app',
   width: 960,
   height: 540,
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+    width: 960,
+    height: 540
+  },
   backgroundColor: '#111320',
   pixelArt: true,
   physics: {
