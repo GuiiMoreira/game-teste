@@ -76,11 +76,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (this.hp === 0) {
       this.state.setState('knockedDown');
       this.setVelocity(0, 0);
-      this.scene.time.delayedCall(800, () => {
-        this.hp = this.maxHp;
-        this.state.setState('getUp');
-        this.scene.time.delayedCall(600, () => this.state.setState('idle'));
-      });
       return;
     }
 
