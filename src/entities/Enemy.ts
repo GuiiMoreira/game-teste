@@ -10,7 +10,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   maxHp = 40;
   moveSpeed = 65;
   attackCooldownUntil = 0;
-  readonly damage = 8;
+  damage = 8;
 
   constructor(scene: Phaser.Scene, x: number, y: number, texture: string) {
     super(scene, x, y, texture);

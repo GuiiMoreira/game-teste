@@ -7,10 +7,10 @@ export class HUD {
 
   constructor(scene: Phaser.Scene) {
     this.healthBar = new HealthBar(scene, 24, 28);
-    this.waveText = scene.add.text(24, 48, 'Wave 1', { fontSize: '16px', color: '#ffffff' });
+    this.waveText = scene.add.text(24, 48, 'Onda 1/1', { fontSize: '16px', color: '#ffffff' });
   }
 
-  setWave(value: number): void {
-    this.waveText.setText(`Wave ${value}`);
+  setWave(current: number, total: number): void {
+    this.waveText.setText(`Onda ${current}/${total}`);
   }
 }
