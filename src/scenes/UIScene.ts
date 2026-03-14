@@ -1,14 +1,20 @@
 import Phaser from 'phaser';
 import { HUD } from '../ui/HUD';
 
+interface WaveHudPayload {
+  current: number;
+  total: number;
+}
+
 export class UIScene extends Phaser.Scene {
   private hud!: HUD;
   private overlayText!: Phaser.GameObjects.Text;
   private gameFinished = false;
   private gameScene!: Phaser.Scene;
   private onHudHealth!: (value: number) => void;
-  private onHudWave!: (wave: number) => void;
+  private onHudWave!: (wave: WaveHudPayload) => void;
   private onHudFinish!: (won: boolean) => void;
+  private waveTotal = 1;
   private readonly onKeyDownR = (): void => {
     if (!this.gameFinished) return;
 
@@ -16,7 +22,7 @@ export class UIScene extends Phaser.Scene {
     this.overlayText.setVisible(false);
     this.overlayText.setText('');
     this.hud.healthBar.setPercent(1);
-    this.hud.setWave(1);
+    this.hud.setWave(1, this.waveTotal);
     this.gameScene.events.emit('ui:restart');
   };
 
@@ -26,6 +32,7 @@ export class UIScene extends Phaser.Scene {
 
   create(): void {
     this.gameFinished = false;
+    this.waveTotal = 1;
     this.hud = new HUD(this);
 
     this.overlayText = this.add.text(this.scale.width / 2, this.scale.height / 2, '', {
@@ -40,8 +47,9 @@ export class UIScene extends Phaser.Scene {
       this.hud.healthBar.setPercent(value);
     };
 
-    this.onHudWave = (wave: number) => {
-      this.hud.setWave(wave);
+    this.onHudWave = (wave: WaveHudPayload) => {
+      this.waveTotal = wave.total;
+      this.hud.setWave(wave.current, wave.total);
     };
 
     this.onHudFinish = (won: boolean) => {
