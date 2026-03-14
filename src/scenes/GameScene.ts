@@ -14,6 +14,9 @@ export class GameScene extends Phaser.Scene {
   private enemyAI = new EnemyAI();
   private waveManager!: WaveManager;
   private gameEnded = false;
+  private readonly onUiRestart = (): void => {
+    this.scene.restart();
+  };
 
   constructor() {
     super('GameScene');
@@ -21,7 +24,6 @@ export class GameScene extends Phaser.Scene {
 
   create(): void {
     this.gameEnded = false;
-    this.events.removeAllListeners('ui:restart');
     this.add.image(this.scale.width / 2, 390, 'bg-floor');
 
     this.add.rectangle(this.scale.width / 2, 370, 940, 310, 0x222036).setStrokeStyle(2, 0x56547a);
@@ -40,7 +42,11 @@ export class GameScene extends Phaser.Scene {
     this.waveManager.spawnNextWave();
     this.events.emit('hud:health', 1);
 
-    this.events.on('ui:restart', () => this.scene.restart());
+    this.events.on('ui:restart', this.onUiRestart);
+
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.events.off('ui:restart', this.onUiRestart);
+    });
   }
 
   update(_time: number, _delta: number): void {
