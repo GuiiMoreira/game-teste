@@ -5,6 +5,20 @@ export class UIScene extends Phaser.Scene {
   private hud!: HUD;
   private overlayText!: Phaser.GameObjects.Text;
   private gameFinished = false;
+  private gameScene!: Phaser.Scene;
+  private onHudHealth!: (value: number) => void;
+  private onHudWave!: (wave: number) => void;
+  private onHudFinish!: (won: boolean) => void;
+  private readonly onKeyDownR = (): void => {
+    if (!this.gameFinished) return;
+
+    this.gameFinished = false;
+    this.overlayText.setVisible(false);
+    this.overlayText.setText('');
+    this.hud.healthBar.setPercent(1);
+    this.hud.setWave(1);
+    this.gameScene.events.emit('ui:restart');
+  };
 
   constructor() {
     super('UIScene');
@@ -20,41 +34,44 @@ export class UIScene extends Phaser.Scene {
       align: 'center'
     }).setOrigin(0.5).setDepth(100).setVisible(false);
 
-    const gameScene = this.scene.get('GameScene');
+    this.gameScene = this.scene.get('GameScene');
 
-    const onHealth = (value: number) => {
+    this.onHudHealth = (value: number) => {
       this.hud.healthBar.setPercent(value);
     };
 
-    const onWave = (wave: number) => {
+    this.onHudWave = (wave: number) => {
       this.hud.setWave(wave);
     };
 
-    const onFinish = (won: boolean) => {
+    this.onHudFinish = (won: boolean) => {
       this.gameFinished = true;
       this.overlayText.setVisible(true);
       this.overlayText.setText(won ? 'VOCÊ VENCEU!\nPressione R para reiniciar' : 'GAME OVER\nPressione R para reiniciar');
     };
 
-    gameScene.events.on('hud:health', onHealth);
-    gameScene.events.on('hud:wave', onWave);
-    gameScene.events.on('hud:finish', onFinish);
+    this.gameScene.events.on('hud:health', this.onHudHealth);
+    this.gameScene.events.on('hud:wave', this.onHudWave);
+    this.gameScene.events.on('hud:finish', this.onHudFinish);
 
-    this.input.keyboard?.on('keydown-R', () => {
-      if (!this.gameFinished) return;
-
-      this.gameFinished = false;
-      this.overlayText.setVisible(false);
-      this.overlayText.setText('');
-      this.hud.healthBar.setPercent(1);
-      this.hud.setWave(1);
-      gameScene.events.emit('ui:restart');
-    });
+    this.input.keyboard?.on('keydown-R', this.onKeyDownR);
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
-      gameScene.events.off('hud:health', onHealth);
-      gameScene.events.off('hud:wave', onWave);
-      gameScene.events.off('hud:finish', onFinish);
+      this.cleanupListeners();
     });
+
+    this.events.once(Phaser.Scenes.Events.DESTROY, () => {
+      this.cleanupListeners();
+    });
+  }
+
+  private cleanupListeners(): void {
+    if (this.gameScene) {
+      this.gameScene.events.off('hud:health', this.onHudHealth);
+      this.gameScene.events.off('hud:wave', this.onHudWave);
+      this.gameScene.events.off('hud:finish', this.onHudFinish);
+    }
+
+    this.input.keyboard?.off('keydown-R', this.onKeyDownR);
   }
 }
